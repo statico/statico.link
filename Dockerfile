@@ -1,2 +1,3 @@
 FROM node:alpine
-CMD node index.js
+ADD index.js /app.js
+CMD node app.js
