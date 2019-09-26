@@ -6,6 +6,7 @@ const fs = require('fs')
 const PORT = Number(process.env.PORT) || 5000
 const LINKS_CONF = process.env.LINKS_CONF || 'Missing LINKS_CONF'
 const BASE_URL = process.env.BASE_URL || 'https://statico.link'
+const TITLE = process.env.TITLE || 'statico.link'
 
 const customLinks = {
   ip: 'Your public IPv4 address',
@@ -20,21 +21,20 @@ const server = http.createServer((req, res) => {
     out += `<!doctype html>
       <html>
       <head>
-        <title>${BASE_URL}</title>
+        <title>${TITLE}</title>
         <meta charset="utf-8" />
         <meta name="robots" content="noindex, nofollow" />
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous" />
       </head>
       <body>
 
-      <div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-4 bg-white border-bottom shadow-sm">
-        <h3 class="my-0 mr-md-auto font-weight-normal">statico.link</h3>
-        <nav class="my-2 my-md-0 mr-md-3">
-          <a class="p-2 text-dark" href="${BASE_URL}/how">Why?</a>
-        </nav>
-      </div>
-
       <div class="container">
+        <h1 class="display-4 my-4">
+          ${TITLE}
+          <span class="h6 font-weight-normal float-right">
+            <a href="${BASE_URL}/how">What is this?</a>
+          </span>
+        </h1>
         <table class="table table-bordered">
     `
 
@@ -58,6 +58,7 @@ const server = http.createServer((req, res) => {
       const [path, url, ...more] = line.split(/\s+/)
       const short = `${BASE_URL}${path}`
       if (/priv/.test(more.join(' '))) continue
+      if (customLinks[path.substr(1)]) continue
       out += `
         <tr>
           <td class="text-nowrap">
@@ -68,12 +69,12 @@ const server = http.createServer((req, res) => {
             >${short}</a>
           </td>
           <td>
-            <blockquote class="embedly-card">
-              <h4>
-                <a href="${url}" rel="noreferrer,noopener" target="_blank">${url}</a>
-              </h4>
-              <p>${url}</p>
-            </blockquote>
+            <a
+              href="${url}"
+              rel="noreferrer,noopener"
+              target="_blank"
+              class="link-preview"
+            >${url}</a>
           </td>
         </tr>
       `
@@ -82,7 +83,6 @@ const server = http.createServer((req, res) => {
     out += `
       </table>
       </div>
-      <script async src="https://cdn.embedly.com/widgets/platform.js" charset="UTF-8"></script>
       </body>
       </html>
     `
