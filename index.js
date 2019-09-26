@@ -10,7 +10,7 @@ const TITLE = process.env.TITLE || 'statico.link'
 
 const customLinks = {
   ip: 'Your public IPv4 address',
-  geoip: 'Inforamtion about your IP using ipdata.co',
+  geoip: 'Information about your IP using ipdata.co',
   useragent: 'Your current user agent',
 }
 
