@@ -1,3 +1,6 @@
 FROM node:alpine
-ADD index.js /app.js
-CMD node app.js
+WORKDIR /app
+COPY package.json yarn.lock server.ts ./
+RUN yarn --production
+ENV LINKS_CONF=/links.conf
+CMD yarn run start
