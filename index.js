@@ -1,6 +1,6 @@
-import * as express from "express"
-import { readFileSync } from "fs"
-import fetch from "node-fetch"
+const express = require("express")
+const fs = require("fs")
+const fetch = require("node-fetch")
 
 require("dotenv").config()
 
@@ -48,7 +48,7 @@ app.get("/useragent", (req, res) => {
 })
 
 app.get("/:key", (req, res) => {
-  const conf = readFileSync(LINKS_CONF, "utf8")
+  const conf = fs.readFileSync(LINKS_CONF, "utf8")
   const lines = conf.split(/\n+/g).filter((x) => x)
   const key = req.params.key.replace(/\W/g, "").toLowerCase()
 
@@ -104,7 +104,7 @@ app.get("/", (req, res) => {
     `
   }
 
-  const conf = readFileSync(LINKS_CONF, "utf8")
+  const conf = fs.readFileSync(LINKS_CONF, "utf8")
   const lines = conf.split(/\n+/g).filter((x) => x)
   for (const line of lines) {
     const [path, url, ...more] = line.split(/\s+/)
