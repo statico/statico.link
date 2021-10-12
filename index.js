@@ -23,8 +23,7 @@ const CUSTOM_LINKS = {
 const app = express()
 app.set("json spaces", 2)
 
-const ip = (req: express.Request) =>
-  req.headers["x-forwarded-for"] ?? req.socket.remoteAddress
+const ip = (req) => req.headers["x-forwarded-for"] ?? req.socket.remoteAddress
 
 app.get("/ip", (req, res) => {
   res.set("Content-Type", "text/plain")
@@ -39,7 +38,7 @@ app.get("/geoip", async (req, res) => {
     const obj = await data.json()
     res.json(obj)
   } else {
-    res.send('IPDATA_KEY not configured')
+    res.send("IPDATA_KEY not configured")
   }
 })
 
