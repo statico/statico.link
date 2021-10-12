@@ -39,6 +39,7 @@ app.get("/geoip", async (req, res) => {
     const obj = await data.json()
     res.json(obj)
   } else {
+    res.send('IPDATA_KEY not configured')
   }
 })
 
