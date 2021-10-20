@@ -1,4 +1,4 @@
-# statico.link / ianl.link short URLs
+# [statico.link](https://statico.link) / [ianl.link](https://ianl.link) short URLs
 
 **Why?** I wanted an easy way to paste URLs that I use and share a lot.
 
