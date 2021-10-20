@@ -10,6 +10,8 @@
 
 ## Link configuration file
 
+Keys should be whole words. The server strips all hyphens from the key so that you can add a link like `foobarbaz https://... ;` and then paste `https://your.links/foo-bar-baz` into chat to make it more readable.
+
 The link config file is a simple file full of lines in this format, which is compatible with NGINX for the above historical reasons:
 
 ```
