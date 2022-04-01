@@ -1,5 +1,7 @@
 # [statico.link](https://statico.link) / [ianl.link](https://ianl.link) short URLs
 
+![build status](https://img.shields.io/github/workflow/status/statico/statico.link/Create%20and%20publish%20a%20Docker%20image.svg?style=flat-square)
+
 **Why?** I wanted an easy way to paste URLs that I use and share a lot.
 
 **How?** This started as a simple NGINX redirect map [like this](https://gist.github.com/statico/14fa84d7e79722031d5e49694191ba1d) because I already run NGINX for other things and wanted the simplest thing possible. Then people wanted an index page, and then the ipdata.co free API stopped working, so I made it a tiny service that would parse the existing config file.
