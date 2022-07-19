@@ -4,7 +4,7 @@ const fetch = require("unfetch")
 
 require("dotenv").config()
 
-const PORT = Number(process.env.PORT) || 5000
+const PORT = Number(process.env.PORT) || 8080
 const IPDATA_KEY = String(process.env.IPDATA_KEY)
 const LINKS_CONF = process.env.LINKS_CONF || "Missing LINKS_CONF"
 const BASE_URL = process.env.BASE_URL || "https://cool.link"
