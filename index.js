@@ -136,6 +136,9 @@ app.get("/", (req, res) => {
     </table>
     </div>
     </div>
+    
+    <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "9da4e4f0ad754582bff31bdffba1b98f"}'></script><!-- End Cloudflare Web Analytics -->
+    
     </body>
     </html>
   `
