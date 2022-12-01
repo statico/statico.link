@@ -137,7 +137,7 @@ app.get("/", (req, res) => {
     </div>
     </div>
     
-    <script src="https://s.langworth.com/data.js" data-token="17b9f110" defer></script>
+    ${process.env.FOOTER_HTML || ""}
     
     </body>
     </html>
