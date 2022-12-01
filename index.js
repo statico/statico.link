@@ -137,7 +137,7 @@ app.get("/", (req, res) => {
     </div>
     </div>
     
-    <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "9da4e4f0ad754582bff31bdffba1b98f"}'></script><!-- End Cloudflare Web Analytics -->
+    <script src="https://s.langworth.com/data.js" data-token="17b9f110" defer></script>
     
     </body>
     </html>
