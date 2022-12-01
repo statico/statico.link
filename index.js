@@ -1,6 +1,5 @@
 const express = require("express");
 const fs = require("fs");
-const fetch = require("isomorphic-unfetch");
 
 require("dotenv").config();
 
