@@ -1,6 +1,6 @@
 # [statico.link](https://statico.link) / [ianl.link](https://ianl.link) short URLs
 
-[![build status](https://img.shields.io/github/workflow/status/statico/statico.link/Create%20and%20publish%20a%20Docker%20image.svg?style=flat-square)](https://ghcr.io/statico/statico.link)
+[![build status](https://img.shields.io/github/actions/workflow/status/statico/statico.link/build.yml?branch=main&style=flat-square)](https://ghcr.io/statico/statico.link)
 
 **Why?** I wanted an easy way to paste URLs that I use and share a lot.
 
