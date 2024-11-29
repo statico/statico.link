@@ -1,6 +1,6 @@
 FROM node:alpine
 WORKDIR /app
-COPY package.json yarn.lock index.js ./
-RUN yarn --production
+COPY package.json pnpm-lock.yaml index.js ./
+RUN npm install -g pnpm && pnpm install --prod
 ENV LINKS_CONF=/links.conf
-CMD yarn run start
+CMD pnpm run start
