@@ -5,9 +5,11 @@
   "license": "MIT",
   "private": true,
   "type": "module",
+  "main": "lib/server.js",
   "scripts": {
     "dev": "node --env-file=.env --watch lib/server.js",
     "start": "node --env-file=.env lib/server.js",
+    "build": "echo 'No build needed'",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
