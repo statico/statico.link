@@ -74,6 +74,7 @@ web_modules/
 # dotenv environment variables file
 .env
 .env.test
+.env*.local
 
 # Next.js environment variables file
 .env.local
@@ -132,6 +133,9 @@ dist
 *.swp
 *.swo
 *~
+
+# Vercel
+.vercel
 
 # OS
 Thumbs.db
