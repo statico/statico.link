@@ -14,15 +14,15 @@ importers:
       '@fastify/rate-limit':
         specifier: ^10.1.1
         version: 10.3.0
-      dotenv:
-        specifier: ^17.2.3
-        version: 17.2.3
       fastify:
         specifier: ^5.2.0
         version: 5.6.2
       pg:
         specifier: ^8.13.1
         version: 8.16.3
+      serverless-http:
+        specifier: ^4.0.0
+        version: 4.0.0
     devDependencies:
       eslint:
         specifier: ^9.18.0
@@ -215,10 +215,6 @@ packages:
   dequal@2.0.3:
     resolution: {integrity: sha512-0je+qPKHEMohvfRTCEo3CrPG6cAzAYgmzKyxRiYSSDkS6eGJdyVJm7WaYA5ECaAD9wLB2T4EEeymA5aFVcYXCA==}
     engines: {node: '>=6'}
-
-  dotenv@17.2.3:
-    resolution: {integrity: sha512-JVUnt+DUIzu87TABbhPmNfVdBDt18BLOWjMUFJMSi/Qqg7NTYtabbvSNJGOJ7afbRuv9D/lngizHtP7QyLQ+9w==}
-    engines: {node: '>=12'}
 
   escape-string-regexp@4.0.0:
     resolution: {integrity: sha512-TtpcNJ3XAzx3Gq8sWRzJaVajRs0uVxA2YAkdb1jm2YkPz4G6egUFAyA3n5vtEIZefPk5Wa4UXbKuS5fKkJWdgA==}
@@ -557,6 +553,10 @@ packages:
     engines: {node: '>=10'}
     hasBin: true
 
+  serverless-http@4.0.0:
+    resolution: {integrity: sha512-KKl9h1+VApX9y2vHsVMogf906UXBwO3FDYiWPzqS0mCjEEx4Sx91JrssbWA7RN43HBuxrtoh8MkocZPvjyGnLg==}
+    engines: {node: '>=12.0'}
+
   set-cookie-parser@2.7.2:
     resolution: {integrity: sha512-oeM1lpU/UvhTxw+g3cIfxXHyJRc/uidd3yK1P242gzHds0udQBYzs3y8j4gCCW+ZJ7ad0yctld8RYO+bdurlvw==}
 
@@ -791,8 +791,6 @@ snapshots:
   deep-is@0.1.4: {}
 
   dequal@2.0.3: {}
-
-  dotenv@17.2.3: {}
 
   escape-string-regexp@4.0.0: {}
 
@@ -1134,6 +1132,8 @@ snapshots:
   secure-json-parse@4.1.0: {}
 
   semver@7.6.3: {}
+
+  serverless-http@4.0.0: {}
 
   set-cookie-parser@2.7.2: {}
 

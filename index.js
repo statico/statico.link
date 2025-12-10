@@ -1,4 +1,3 @@
-import "dotenv/config";
 import fastify from "fastify";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
@@ -253,23 +252,31 @@ app.setErrorHandler((error, _request, reply) => {
   });
 });
 
-// Start server
-try {
-  // Test database connection
-  await pool.query("SELECT 1");
-  app.log.info("Database connection established");
+// Initialize app (ensure it's ready)
+await app.ready();
 
-  await app.listen({ port: PORT, host: "0.0.0.0" });
-  app.log.info(`Server listening on http://0.0.0.0:${PORT}`);
-} catch (error) {
-  app.log.error(error);
-  process.exit(1);
+// Export for Vercel serverless
+export default app;
+
+// Start server only when not on Vercel
+if (!process.env.VERCEL) {
+  try {
+    // Test database connection
+    await pool.query("SELECT 1");
+    app.log.info("Database connection established");
+
+    await app.listen({ port: PORT, host: "0.0.0.0" });
+    app.log.info(`Server listening on http://0.0.0.0:${PORT}`);
+  } catch (error) {
+    app.log.error(error);
+    process.exit(1);
+  }
+
+  // Graceful shutdown
+  process.on("SIGTERM", async () => {
+    app.log.info("SIGTERM received, shutting down gracefully");
+    await pool.end();
+    await app.close();
+    process.exit(0);
+  });
 }
-
-// Graceful shutdown
-process.on("SIGTERM", async () => {
-  app.log.info("SIGTERM received, shutting down gracefully");
-  await pool.end();
-  await app.close();
-  process.exit(0);
-});
