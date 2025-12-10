@@ -1,2 +1,16 @@
-.env
 node_modules
+npm-debug.log
+.git
+.gitignore
+.env
+.env.test
+.env.local
+.DS_Store
+coverage
+.nyc_output
+.vscode
+.idea
+*.log
+README.md
+.eslintrc.json
+.prettierrc.json

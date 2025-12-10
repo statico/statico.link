@@ -1,11 +1,11 @@
-const express = require("express");
-const fs = require("fs");
-const fetch = require("isomorphic-unfetch");
-
-require("dotenv").config();
+import "dotenv/config";
+import fastify from "fastify";
+import helmet from "@fastify/helmet";
+import rateLimit from "@fastify/rate-limit";
+import { readFileSync } from "fs";
 
 const PORT = Number(process.env.PORT) || 8080;
-const IPDATA_KEY = String(process.env.IPDATA_KEY);
+const IPDATA_KEY = String(process.env.IPDATA_KEY || "");
 const LINKS_CONF = process.env.LINKS_CONF || "Missing LINKS_CONF";
 const BASE_URL = process.env.BASE_URL || "https://cool.link";
 const TITLE = process.env.TITLE || "My Awesome Links";
@@ -20,56 +20,118 @@ const CUSTOM_LINKS = {
   useragent: "Your current user agent",
 };
 
-const app = express();
-app.set("json spaces", 2);
-
-const ip = (req) => req.headers["x-forwarded-for"] ?? req.socket.remoteAddress;
-
-app.get("/ip", (req, res) => {
-  res.set("Content-Type", "text/plain");
-  res.send(ip(req) + "\n");
+const app = fastify({
+  logger: {
+    level: process.env.LOG_LEVEL || "info",
+  },
 });
 
-app.get("/geoip", async (req, res) => {
-  if (IPDATA_KEY) {
-    const data = await fetch(
-      `https://api.ipdata.co/${ip(req)}?api-key=${IPDATA_KEY}`
+// Register security plugins
+await app.register(helmet, {
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "https://cdn.jsdelivr.net", "'unsafe-inline'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+    },
+  },
+  referrerPolicy: {
+    policy: "unsafe-url",
+  },
+});
+
+await app.register(rateLimit, {
+  max: 100,
+  timeWindow: "1 minute",
+  skipOnError: true,
+});
+
+// Helper function to get client IP
+const getClientIp = (request) => {
+  return (
+    request.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
+    request.ip ||
+    request.socket?.remoteAddress ||
+    "unknown"
+  );
+};
+
+// Route: /ip
+app.get("/ip", async (request, reply) => {
+  reply.type("text/plain");
+  return getClientIp(request) + "\n";
+});
+
+// Route: /geoip
+app.get("/geoip", async (request, reply) => {
+  if (!IPDATA_KEY) {
+    reply.code(503);
+    return "IPDATA_KEY not configured";
+  }
+
+  try {
+    const ip = getClientIp(request);
+    const response = await fetch(
+      `https://api.ipdata.co/${ip}?api-key=${IPDATA_KEY}`
     );
-    const obj = await data.json();
-    res.json(obj);
-  } else {
-    res.send("IPDATA_KEY not configured");
-  }
-});
 
-app.get("/useragent", (req, res) => {
-  res.set("Content-Type", "text/plain");
-  res.send(req.headers["user-agent"] + "\n");
-});
-
-app.get("/:key", (req, res) => {
-  const conf = fs.readFileSync(LINKS_CONF, "utf8");
-  const lines = conf.split(/\n+/g).filter((x) => x);
-  const key = req.params.key.replace(/\W/g, "").toLowerCase();
-
-  for (const line of lines) {
-    const [path, url] = line.split(/\s+/, 2);
-    if (path.substr(1) === key) {
-      res.set("Referrer-Policy", "unsafe-url");
-      res.set("X-Robots-Tag", "noindex, nofollow");
-      res.redirect(302, url);
-      return;
+    if (!response.ok) {
+      reply.code(response.status);
+      return { error: "Failed to fetch IP data" };
     }
-  }
 
-  res.status(404).send("Not found");
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    app.log.error(error, "Error fetching geoip data");
+    reply.code(500);
+    return { error: "Internal server error" };
+  }
 });
 
-app.get("/", (req, res) => {
+// Route: /useragent
+app.get("/useragent", async (request, reply) => {
+  reply.type("text/plain");
+  return (request.headers["user-agent"] || "unknown") + "\n";
+});
+
+// Route: /:key (redirect handler)
+app.get("/:key", async (request, reply) => {
+  try {
+    const conf = readFileSync(LINKS_CONF, "utf8");
+    const lines = conf.split(/\n+/g).filter((x) => x);
+    const key = request.params.key.replace(/\W/g, "").toLowerCase();
+
+    for (const line of lines) {
+      const [path, url] = line.split(/\s+/, 2);
+      if (path && path.slice(1) === key) {
+        reply.header("Referrer-Policy", "unsafe-url");
+        reply.header("X-Robots-Tag", "noindex, nofollow");
+        return reply.redirect(302, url);
+      }
+    }
+
+    reply.code(404);
+    return "Not found";
+  } catch (error) {
+    if (error.code === "ENOENT") {
+      app.log.error(`Links config file not found: ${LINKS_CONF}`);
+      reply.code(500);
+      return "Configuration error";
+    }
+    app.log.error(error, "Error reading links config");
+    reply.code(500);
+    return "Internal server error";
+  }
+});
+
+// Route: / (index page)
+app.get("/", async (_request, reply) => {
   let out = `<!doctype html>
     <html>
     <head>
-      <title>${TITLE}</title>
+      <title>${escapeHtml(TITLE)}</title>
       <meta charset="utf-8" />
       <meta name="robots" content="noindex, nofollow" />
       <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -93,10 +155,10 @@ app.get("/", (req, res) => {
 
     <div class="container">
       <div class="my-4">
-        <h1 class="display-4">${TITLE}</h1>
+        <h1 class="display-4">${escapeHtml(TITLE)}</h1>
         <h2 class="lead">
-          ${DESCRIPTION}
-          <a href="${GITHUB_URL}" class="text-muted text-decoration-none">(Source)</a>
+          ${escapeHtml(DESCRIPTION)}
+          <a href="${escapeHtml(GITHUB_URL)}" class="text-muted text-decoration-none">(Source)</a>
         </h2>
       </div>
       <div class="table-responsive">
@@ -108,41 +170,46 @@ app.get("/", (req, res) => {
     out += `
       <tr>
         <td class="text-nowrap">
-          <a href="/${key}" rel="noreferrer,noopener" target="_blank">${short}</a>
+          <a href="/${escapeHtml(key)}" rel="noreferrer,noopener" target="_blank">${escapeHtml(short)}</a>
         </td>
         <td class="text-truncate">
-          ${CUSTOM_LINKS[key]}
+          ${escapeHtml(CUSTOM_LINKS[key])}
         </td>
       </tr>
     `;
   }
 
-  const conf = fs.readFileSync(LINKS_CONF, "utf8");
-  const lines = conf.split(/\n+/g).filter((x) => x);
-  for (const line of lines) {
-    const [path, url, ...more] = line.split(/\s+/);
-    const short = `${BASE_URL}${path}`;
-    if (/priv/.test(more.join(" "))) continue;
-    if (CUSTOM_LINKS[path.substr(1)]) continue;
-    out += `
+  try {
+    const conf = readFileSync(LINKS_CONF, "utf8");
+    const lines = conf.split(/\n+/g).filter((x) => x);
+    for (const line of lines) {
+      const [path, url, ...more] = line.split(/\s+/);
+      if (!path || !url) continue;
+      const short = `${BASE_URL}${path}`;
+      if (/priv/.test(more.join(" "))) continue;
+      if (CUSTOM_LINKS[path.slice(1)]) continue;
+      out += `
       <tr>
         <td class="text-nowrap">
           <a
-            href="${path}"
+            href="${escapeHtml(path)}"
             rel="noreferrer,noopener"
             target="_blank"
-          >${short}</a>
+          >${escapeHtml(short)}</a>
         </td>
         <td>
           <a
-            href="${url}"
+            href="${escapeHtml(url)}"
             rel="noreferrer,noopener"
             target="_blank"
             class="link-preview"
-          >${url}</a>
+          >${escapeHtml(url)}</a>
         </td>
       </tr>
     `;
+    }
+  } catch (error) {
+    app.log.error(error, "Error reading links config for index page");
   }
 
   out += `
@@ -155,9 +222,36 @@ app.get("/", (req, res) => {
     </body>
     </html>
   `;
-  res.send(out);
+  reply.type("text/html");
+  return out;
 });
 
-app.listen(PORT, () => {
-  console.info(`Listening on http://127.0.0.1:${PORT}`);
+// Helper function to escape HTML
+function escapeHtml(text) {
+  if (typeof text !== "string") return "";
+  const map = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;",
+  };
+  return text.replace(/[&<>"']/g, (m) => map[m]);
+}
+
+// Error handler
+app.setErrorHandler((error, _request, reply) => {
+  app.log.error(error, "Request error");
+  reply.code(error.statusCode || 500).send({
+    error: error.message || "Internal server error",
+  });
 });
+
+// Start server
+try {
+  await app.listen({ port: PORT, host: "0.0.0.0" });
+  app.log.info(`Server listening on http://0.0.0.0:${PORT}`);
+} catch (error) {
+  app.log.error(error);
+  process.exit(1);
+}

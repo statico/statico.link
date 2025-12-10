@@ -4,18 +4,27 @@
   "author": "Ian Langworth <ian@langworth.com>",
   "license": "MIT",
   "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
-    "dev": "nodemon",
-    "start": "node index.js"
+    "dev": "node --watch index.js",
+    "start": "node index.js",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "packageManager": "pnpm@9.12.3+sha512.cce0f9de9c5a7c95bef944169cc5dfe8741abfb145078c0d508b868056848a87c81e626246cb60967cbd7fd29a6c062ef73ff840d96b3c86c40ac92cf4a813ee",
   "dependencies": {
-    "dotenv": "^16.4.5",
-    "express": "^4.21.1",
-    "isomorphic-unfetch": "^4.0.2"
+    "@fastify/helmet": "^12.0.1",
+    "@fastify/rate-limit": "^10.1.1",
+    "dotenv": "^17.2.3",
+    "fastify": "^5.2.0"
   },
   "devDependencies": {
-    "nodemon": "3.1.7",
-    "prettier": "3.4.1"
+    "eslint": "^9.18.0",
+    "eslint-config-prettier": "^9.1.2",
+    "prettier": "^3.7.4"
   }
 }
