@@ -4,49 +4,49 @@
 
 **Why?** I wanted an easy way to paste URLs that I use and share a lot.
 
-**How?** This started as a simple NGINX redirect map [like this](https://gist.github.com/statico/14fa84d7e79722031d5e49694191ba1d) because I already run NGINX for other things and wanted the simplest thing possible. Then people wanted an index page, and then the ipdata.co free API stopped working, so I made it a tiny service that would parse the existing config file.
+**How?** This started as a simple NGINX redirect map [like this](https://gist.github.com/statico/14fa84d7e79722031d5e49694191ba1d) because I already run NGINX for other things and wanted the simplest thing possible. Then people wanted an index page, and then the ipdata.co free API stopped working, so I made it a tiny service that would parse the existing config file. Now it uses PostgreSQL for better scalability and management.
 
 **What else?** The site is marked noindex, nofollow to prevent crawling. Redirects are sent with a `Referrer-Policy: unsafe-url` header for reasons that I think sounded smart at the time but I'm too lazy to look up right now.
 
 <img width="1434" alt="image" src="https://user-images.githubusercontent.com/137158/138023227-b74cb8f4-48c1-4b1b-b3f8-060e7beca9f3.png">
 
-## Link configuration file
+## Database setup
 
-Keys should be whole words. The server strips all hyphens from the key so that you can add a link like `foobarbaz https://... ;` and then paste `https://your.links/foo-bar-baz` into chat to make it more readable.
+The application uses PostgreSQL to store links. Create the database schema using the provided `schema.sql` file:
 
-The link config file is a simple file full of lines in this format, which is compatible with NGINX for the above historical reasons:
-
-```
-<key> <url> ;
+```bash
+psql $DATABASE_URL -f schema.sql
 ```
 
-Or, for links you want to work but don't want to list on the page,
+The schema includes a `links` table with the following structure:
+- `slug` (TEXT PRIMARY KEY) - The short URL slug
+- `url` (TEXT NOT NULL) - The destination URL
+- `private` (BOOLEAN DEFAULT FALSE) - If true, the link won't appear on the index page but will still work for redirects
 
-```
-<key> <url> ; # private
-```
+Keys should be whole words. The server strips all non-word characters from the key so that you can add a link like `foobarbaz` and then paste `https://your.links/foo-bar-baz` into chat to make it more readable.
 
 ## Environment variables
 
-Configure the following env vars either through Docker or a `.env` file or whatever:
+Configure the following env vars either through Docker or a `.env` file (Node.js will automatically load `.env` files):
 
-- `PORT` - Port number to listen on, defaults to 5000
+- `DATABASE_URL` - PostgreSQL connection string (required)
+- `PORT` - Port number to listen on, defaults to 8080
 - `IPDATA_KEY` - Get an API key from https://dashboard.ipdata.co/api.html
-- `LINKS_CONF` - Path to the links config file (see above)
-- `BASE_URL` - Base URL like `https://cool.link/`
+- `BASE_URL` - Base URL like `https://cool.link`
 - `TITLE` - Title to appear on the page
 - `DESCRIPTION` - Byline to appear on the page
 - `GITHUB_URL` - Link to this page
 
 ## Develop
 
-Get a recent Node.js and Yarn and run:
+Get a recent Node.js and pnpm and run:
 
+```bash
+$ pnpm install
+$ pnpm run dev
 ```
-$ yarn install
-$ yarn global add nodemon
-$ nodemon
-```
+
+Make sure you have a PostgreSQL database running and set the `DATABASE_URL` environment variable (or create a `.env` file).
 
 ## Deploy
 

@@ -2,17 +2,28 @@ import "dotenv/config";
 import fastify from "fastify";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
-import { readFileSync } from "fs";
+import pg from "pg";
+
+const { Pool } = pg;
 
 const PORT = Number(process.env.PORT) || 8080;
 const IPDATA_KEY = String(process.env.IPDATA_KEY || "");
-const LINKS_CONF = process.env.LINKS_CONF || "Missing LINKS_CONF";
+const DATABASE_URL = process.env.DATABASE_URL;
 const BASE_URL = process.env.BASE_URL || "https://cool.link";
 const TITLE = process.env.TITLE || "My Awesome Links";
 const DESCRIPTION =
   process.env.DESCRIPTION || "A collection of links that I like";
 const GITHUB_URL =
   process.env.GITHUB_URL || "https://github.com/statico/statico-link-list";
+
+if (!DATABASE_URL) {
+  console.error("DATABASE_URL environment variable is required");
+  process.exit(1);
+}
+
+const pool = new Pool({
+  connectionString: DATABASE_URL,
+});
 
 const CUSTOM_LINKS = {
   ip: "Your public IPv4 address",
@@ -99,28 +110,23 @@ app.get("/useragent", async (request, reply) => {
 // Route: /:key (redirect handler)
 app.get("/:key", async (request, reply) => {
   try {
-    const conf = readFileSync(LINKS_CONF, "utf8");
-    const lines = conf.split(/\n+/g).filter((x) => x);
     const key = request.params.key.replace(/\W/g, "").toLowerCase();
 
-    for (const line of lines) {
-      const [path, url] = line.split(/\s+/, 2);
-      if (path && path.slice(1) === key) {
-        reply.header("Referrer-Policy", "unsafe-url");
-        reply.header("X-Robots-Tag", "noindex, nofollow");
-        return reply.redirect(302, url);
-      }
+    const result = await pool.query(
+      "SELECT url FROM links WHERE slug = $1",
+      [key]
+    );
+
+    if (result.rows.length === 0) {
+      reply.code(404);
+      return "Not found";
     }
 
-    reply.code(404);
-    return "Not found";
+    reply.header("Referrer-Policy", "unsafe-url");
+    reply.header("X-Robots-Tag", "noindex, nofollow");
+    reply.redirect(result.rows[0].url, 302);
   } catch (error) {
-    if (error.code === "ENOENT") {
-      app.log.error(`Links config file not found: ${LINKS_CONF}`);
-      reply.code(500);
-      return "Configuration error";
-    }
-    app.log.error(error, "Error reading links config");
+    app.log.error(error, "Error querying database");
     reply.code(500);
     return "Internal server error";
   }
@@ -180,19 +186,19 @@ app.get("/", async (_request, reply) => {
   }
 
   try {
-    const conf = readFileSync(LINKS_CONF, "utf8");
-    const lines = conf.split(/\n+/g).filter((x) => x);
-    for (const line of lines) {
-      const [path, url, ...more] = line.split(/\s+/);
-      if (!path || !url) continue;
-      const short = `${BASE_URL}${path}`;
-      if (/priv/.test(more.join(" "))) continue;
-      if (CUSTOM_LINKS[path.slice(1)]) continue;
+    const result = await pool.query(
+      "SELECT slug, url FROM links WHERE private = FALSE ORDER BY slug"
+    );
+    for (const row of result.rows) {
+      const slug = row.slug;
+      const url = row.url;
+      if (CUSTOM_LINKS[slug]) continue;
+      const short = `${BASE_URL}/${slug}`;
       out += `
       <tr>
         <td class="text-nowrap">
           <a
-            href="${escapeHtml(path)}"
+            href="/${escapeHtml(slug)}"
             rel="noreferrer,noopener"
             target="_blank"
           >${escapeHtml(short)}</a>
@@ -209,7 +215,7 @@ app.get("/", async (_request, reply) => {
     `;
     }
   } catch (error) {
-    app.log.error(error, "Error reading links config for index page");
+    app.log.error(error, "Error querying database for index page");
   }
 
   out += `
@@ -249,9 +255,21 @@ app.setErrorHandler((error, _request, reply) => {
 
 // Start server
 try {
+  // Test database connection
+  await pool.query("SELECT 1");
+  app.log.info("Database connection established");
+
   await app.listen({ port: PORT, host: "0.0.0.0" });
   app.log.info(`Server listening on http://0.0.0.0:${PORT}`);
 } catch (error) {
   app.log.error(error);
   process.exit(1);
 }
+
+// Graceful shutdown
+process.on("SIGTERM", async () => {
+  app.log.info("SIGTERM received, shutting down gracefully");
+  await pool.end();
+  await app.close();
+  process.exit(0);
+});

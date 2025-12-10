@@ -33,7 +33,6 @@ USER nodejs
 
 # Environment variables
 ENV NODE_ENV=production
-ENV LINKS_CONF=/links.conf
 
 # Expose port
 EXPOSE 8080
