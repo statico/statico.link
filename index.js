@@ -30,14 +30,16 @@ const CUSTOM_LINKS = {
   useragent: "Your current user agent",
 };
 
-const app = fastify({
-  logger: {
-    level: process.env.LOG_LEVEL || "info",
-  },
-});
+// Create and configure Fastify instance
+export async function createApp() {
+  const app = fastify({
+    logger: {
+      level: process.env.LOG_LEVEL || "info",
+    },
+  });
 
-// Register security plugins
-await app.register(helmet, {
+  // Register security plugins
+  await app.register(helmet, {
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
@@ -51,89 +53,89 @@ await app.register(helmet, {
   },
 });
 
-await app.register(rateLimit, {
-  max: 100,
-  timeWindow: "1 minute",
-  skipOnError: true,
-});
+  await app.register(rateLimit, {
+    max: 100,
+    timeWindow: "1 minute",
+    skipOnError: true,
+  });
 
-// Helper function to get client IP
-const getClientIp = (request) => {
-  return (
-    request.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
-    request.ip ||
-    request.socket?.remoteAddress ||
-    "unknown"
-  );
-};
-
-// Route: /ip
-app.get("/ip", async (request, reply) => {
-  reply.type("text/plain");
-  return getClientIp(request) + "\n";
-});
-
-// Route: /geoip
-app.get("/geoip", async (request, reply) => {
-  if (!IPDATA_KEY) {
-    reply.code(503);
-    return "IPDATA_KEY not configured";
-  }
-
-  try {
-    const ip = getClientIp(request);
-    const response = await fetch(
-      `https://api.ipdata.co/${ip}?api-key=${IPDATA_KEY}`
+  // Helper function to get client IP
+  const getClientIp = (request) => {
+    return (
+      request.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
+      request.ip ||
+      request.socket?.remoteAddress ||
+      "unknown"
     );
+  };
 
-    if (!response.ok) {
-      reply.code(response.status);
-      return { error: "Failed to fetch IP data" };
+  // Route: /ip
+  app.get("/ip", async (request, reply) => {
+    reply.type("text/plain");
+    return getClientIp(request) + "\n";
+  });
+
+  // Route: /geoip
+  app.get("/geoip", async (request, reply) => {
+    if (!IPDATA_KEY) {
+      reply.code(503);
+      return "IPDATA_KEY not configured";
     }
 
-    const data = await response.json();
-    return data;
-  } catch (error) {
-    app.log.error(error, "Error fetching geoip data");
-    reply.code(500);
-    return { error: "Internal server error" };
-  }
-});
+    try {
+      const ip = getClientIp(request);
+      const response = await fetch(
+        `https://api.ipdata.co/${ip}?api-key=${IPDATA_KEY}`
+      );
 
-// Route: /useragent
-app.get("/useragent", async (request, reply) => {
-  reply.type("text/plain");
-  return (request.headers["user-agent"] || "unknown") + "\n";
-});
+      if (!response.ok) {
+        reply.code(response.status);
+        return { error: "Failed to fetch IP data" };
+      }
 
-// Route: /:key (redirect handler)
-app.get("/:key", async (request, reply) => {
-  try {
-    const key = request.params.key.replace(/\W/g, "").toLowerCase();
-
-    const result = await pool.query(
-      "SELECT url FROM links WHERE slug = $1",
-      [key]
-    );
-
-    if (result.rows.length === 0) {
-      reply.code(404);
-      return "Not found";
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      app.log.error(error, "Error fetching geoip data");
+      reply.code(500);
+      return { error: "Internal server error" };
     }
+  });
 
-    reply.header("Referrer-Policy", "unsafe-url");
-    reply.header("X-Robots-Tag", "noindex, nofollow");
-    reply.redirect(result.rows[0].url, 302);
-  } catch (error) {
-    app.log.error(error, "Error querying database");
-    reply.code(500);
-    return "Internal server error";
-  }
-});
+  // Route: /useragent
+  app.get("/useragent", async (request, reply) => {
+    reply.type("text/plain");
+    return (request.headers["user-agent"] || "unknown") + "\n";
+  });
 
-// Route: / (index page)
-app.get("/", async (_request, reply) => {
-  let out = `<!doctype html>
+  // Route: /:key (redirect handler)
+  app.get("/:key", async (request, reply) => {
+    try {
+      const key = request.params.key.replace(/\W/g, "").toLowerCase();
+
+      const result = await pool.query(
+        "SELECT url FROM links WHERE slug = $1",
+        [key]
+      );
+
+      if (result.rows.length === 0) {
+        reply.code(404);
+        return "Not found";
+      }
+
+      reply.header("Referrer-Policy", "unsafe-url");
+      reply.header("X-Robots-Tag", "noindex, nofollow");
+      reply.redirect(result.rows[0].url, 302);
+    } catch (error) {
+      app.log.error(error, "Error querying database");
+      reply.code(500);
+      return "Internal server error";
+    }
+  });
+
+  // Route: / (index page)
+  app.get("/", async (_request, reply) => {
+    let out = `<!doctype html>
     <html>
     <head>
       <title>${escapeHtml(TITLE)}</title>
@@ -170,9 +172,9 @@ app.get("/", async (_request, reply) => {
       <table class="table table-bordered">
   `;
 
-  for (const key in CUSTOM_LINKS) {
-    const short = `${BASE_URL}/${key}`;
-    out += `
+    for (const key in CUSTOM_LINKS) {
+      const short = `${BASE_URL}/${key}`;
+      out += `
       <tr>
         <td class="text-nowrap">
           <a href="/${escapeHtml(key)}" rel="noreferrer,noopener" target="_blank">${escapeHtml(short)}</a>
@@ -182,18 +184,18 @@ app.get("/", async (_request, reply) => {
         </td>
       </tr>
     `;
-  }
+    }
 
-  try {
-    const result = await pool.query(
-      "SELECT slug, url FROM links WHERE private = FALSE ORDER BY slug"
-    );
-    for (const row of result.rows) {
-      const slug = row.slug;
-      const url = row.url;
-      if (CUSTOM_LINKS[slug]) continue;
-      const short = `${BASE_URL}/${slug}`;
-      out += `
+    try {
+      const result = await pool.query(
+        "SELECT slug, url FROM links WHERE private = FALSE ORDER BY slug"
+      );
+      for (const row of result.rows) {
+        const slug = row.slug;
+        const url = row.url;
+        if (CUSTOM_LINKS[slug]) continue;
+        const short = `${BASE_URL}/${slug}`;
+        out += `
       <tr>
         <td class="text-nowrap">
           <a
@@ -212,12 +214,12 @@ app.get("/", async (_request, reply) => {
         </td>
       </tr>
     `;
+      }
+    } catch (error) {
+      app.log.error(error, "Error querying database for index page");
     }
-  } catch (error) {
-    app.log.error(error, "Error querying database for index page");
-  }
 
-  out += `
+    out += `
     </table>
     </div>
     </div>
@@ -227,50 +229,57 @@ app.get("/", async (_request, reply) => {
     </body>
     </html>
   `;
-  reply.type("text/html");
-  return out;
-});
+    reply.type("text/html");
+    return out;
+  });
 
-// Helper function to escape HTML
-function escapeHtml(text) {
-  if (typeof text !== "string") return "";
-  const map = {
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#039;",
-  };
-  return text.replace(/[&<>"']/g, (m) => map[m]);
+  // Helper function to escape HTML
+  function escapeHtml(text) {
+    if (typeof text !== "string") return "";
+    const map = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#039;",
+    };
+    return text.replace(/[&<>"']/g, (m) => map[m]);
+  }
+
+  // Error handler
+  app.setErrorHandler((error, _request, reply) => {
+    app.log.error(error, "Request error");
+    reply.code(error.statusCode || 500).send({
+      error: error.message || "Internal server error",
+    });
+  });
+
+  return app;
 }
 
-// Error handler
-app.setErrorHandler((error, _request, reply) => {
-  app.log.error(error, "Request error");
-  reply.code(error.statusCode || 500).send({
-    error: error.message || "Internal server error",
-  });
-});
+// Start server (only when running standalone, not in serverless mode)
+// Check if we're running as the main module (not imported)
+const isMainModule =
+  import.meta.url === `file://${process.argv[1]}` ||
+  process.argv[1]?.endsWith("index.js");
 
-// Initialize app (ensure it's ready)
-await app.ready();
+if (isMainModule && !process.env.VERCEL) {
+  const app = await createApp();
+  const start = async () => {
+    try {
+      // Test database connection
+      await pool.query("SELECT 1");
+      app.log.info("Database connection established");
 
-// Export for Vercel serverless
-export default app;
+      await app.listen({ port: PORT, host: "0.0.0.0" });
+      app.log.info(`Server listening on http://0.0.0.0:${PORT}`);
+    } catch (error) {
+      app.log.error(error);
+      process.exit(1);
+    }
+  };
 
-// Start server only when not on Vercel
-if (!process.env.VERCEL) {
-  try {
-    // Test database connection
-    await pool.query("SELECT 1");
-    app.log.info("Database connection established");
-
-    await app.listen({ port: PORT, host: "0.0.0.0" });
-    app.log.info(`Server listening on http://0.0.0.0:${PORT}`);
-  } catch (error) {
-    app.log.error(error);
-    process.exit(1);
-  }
+  start();
 
   // Graceful shutdown
   process.on("SIGTERM", async () => {
