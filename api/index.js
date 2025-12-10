@@ -1,4 +1,4 @@
-import { createApp } from "../index.js";
+import { createApp } from "../src/server.js";
 
 let app = null;
 

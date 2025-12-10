@@ -261,7 +261,7 @@ export async function createApp() {
 // Check if we're running as the main module (not imported)
 const isMainModule =
   import.meta.url === `file://${process.argv[1]}` ||
-  process.argv[1]?.endsWith("index.js");
+  process.argv[1]?.endsWith("server.js");
 
 if (isMainModule && !process.env.VERCEL) {
   const app = await createApp();
