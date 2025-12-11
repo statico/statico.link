@@ -26,7 +26,8 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 COPY --from=builder /app/node_modules ./node_modules
 
 # Copy application files
-COPY --chown=nodejs:nodejs package.json pnpm-lock.yaml index.js ./
+COPY --chown=nodejs:nodejs package.json pnpm-lock.yaml ./
+COPY --chown=nodejs:nodejs lib/ ./lib/
 
 # Switch to non-root user
 USER nodejs
