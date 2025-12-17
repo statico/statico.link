@@ -9,10 +9,7 @@
   "scripts": {
     "dev": "node --env-file=.env --watch lib/server.js",
     "start": "node --env-file=.env lib/server.js",
-    "build": "echo 'No build needed'",
-    "lint": "eslint .",
-    "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "build": "echo 'No build needed'"
   },
   "packageManager": "pnpm@10.26.0",
   "dependencies": {
@@ -20,10 +17,5 @@
     "@fastify/rate-limit": "^10.3.0",
     "fastify": "^5.6.2",
     "pg": "^8.16.3"
-  },
-  "devDependencies": {
-    "eslint": "^9.39.2",
-    "eslint-config-prettier": "^10.1.8",
-    "prettier": "^3.7.4"
   }
 }
