@@ -11,11 +11,11 @@
     "start": "node --env-file=.env lib/server.js",
     "build": "echo 'No build needed'"
   },
-  "packageManager": "pnpm@10.27.0",
+  "packageManager": "pnpm@10.28.2",
   "dependencies": {
     "@fastify/helmet": "^13.0.2",
     "@fastify/rate-limit": "^10.3.0",
-    "fastify": "^5.6.2",
-    "pg": "^8.16.3"
+    "fastify": "^5.7.2",
+    "pg": "^8.17.2"
   }
 }
