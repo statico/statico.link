@@ -15,7 +15,7 @@
   "dependencies": {
     "@fastify/helmet": "^13.0.2",
     "@fastify/rate-limit": "^10.3.0",
-    "fastify": "^5.7.2",
+    "fastify": "^5.7.3",
     "pg": "^8.17.2"
   }
 }
