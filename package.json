@@ -13,9 +13,8 @@
   },
   "packageManager": "pnpm@10.33.0",
   "dependencies": {
-    "@fastify/helmet": "^13.0.2",
-    "@fastify/rate-limit": "^10.3.0",
-    "fastify": "^5.8.4",
+    "@hono/node-server": "^1.14.1",
+    "hono": "^4.7.9",
     "pg": "^8.20.0"
   }
 }
