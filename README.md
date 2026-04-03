@@ -1,7 +1,5 @@
 # [statico.link](https://statico.link) / [ianl.link](https://ianl.link) short URLs
 
-[![build status](https://img.shields.io/github/actions/workflow/status/statico/statico.link/build.yml?branch=main&style=flat-square)](https://ghcr.io/statico/statico.link)
-
 **Why?** I wanted an easy way to paste URLs that I use and share a lot.
 
 **How?** This started as a simple NGINX redirect map [like this](https://gist.github.com/statico/14fa84d7e79722031d5e49694191ba1d) because I already run NGINX for other things and wanted the simplest thing possible. Then people wanted an index page, and then the ipdata.co free API stopped working, so I made it a tiny service that would parse the existing config file. Now it reads links from a published Google Sheet — no database needed.
@@ -29,7 +27,7 @@ Keys should be whole words. The server strips all non-word characters from the k
 
 ## Environment variables
 
-Configure the following env vars either through Docker or a `.env` file (Node.js will automatically load `.env` files):
+Configure the following env vars in Vercel (or a `.env` file for local development):
 
 - `SHEET_CSV_URL` - Published Google Sheet CSV URL (required)
 - `PORT` - Port number to listen on, defaults to 8080
@@ -52,11 +50,7 @@ Set the `SHEET_CSV_URL` environment variable (or create a `.env` file).
 
 ## Deploy
 
-```
-$ docker build . --tag ghcr.io/statico/statico.link
-```
-
-Etc.
+Deploys to [Vercel](https://vercel.com) — just connect the repo and set the environment variables.
 
 ## License
 
