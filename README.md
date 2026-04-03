@@ -2,7 +2,7 @@
 
 **Why?** I wanted an easy way to paste URLs that I use and share a lot.
 
-**How?** This started as a simple NGINX redirect map [like this](https://gist.github.com/statico/14fa84d7e79722031d5e49694191ba1d) because I already run NGINX for other things and wanted the simplest thing possible. Then people wanted an index page, and then the ipdata.co free API stopped working, so I made it a tiny service that would parse the existing config file. Now it reads links from a published Google Sheet — no database needed.
+**How?** This started as a simple NGINX redirect map [like this](https://gist.github.com/statico/14fa84d7e79722031d5e49694191ba1d) because I already run NGINX for other things and wanted the simplest thing possible. Then people wanted an index page, and then the ipdata.co free API stopped working, so I made it a tiny service that would parse the existing config file. Now it reads links from a published Google Sheet — no database needed. Minimal dependencies: just [Hono](https://hono.dev) and its Node.js adapter.
 
 **What else?** The site is marked noindex, nofollow to prevent crawling. Redirects are sent with a `Referrer-Policy: unsafe-url` header for reasons that I think sounded smart at the time but I'm too lazy to look up right now.
 
@@ -23,7 +23,7 @@ Links are stored in a Google Sheet published as CSV. Create a sheet with three c
 
 To publish: **File → Share → Publish to web**, select the sheet, choose **CSV** format, and copy the URL. Set it as the `SHEET_CSV_URL` environment variable.
 
-Keys should be whole words. The server strips all non-word characters from the key so that you can add a link like `foobarbaz` and then paste `https://your.links/foo-bar-baz` into chat to make it more readable. Links refresh from the sheet every 5 minutes.
+Keys should be whole words. The server strips all non-word characters from the key so that you can add a link like `foobarbaz` and then paste `https://your.links/foo-bar-baz` into chat to make it more readable. Links refresh from the sheet every 5 minutes, or you can hit `/_refresh` to force an immediate refetch (use `/_refresh?secret=VALUE` if `REFRESH_SECRET` is set).
 
 ## Environment variables
 
@@ -36,6 +36,7 @@ Configure the following env vars in Vercel (or a `.env` file for local developme
 - `TITLE` - Title to appear on the page
 - `DESCRIPTION` - Byline to appear on the page
 - `GITHUB_URL` - Link to this page
+- `REFRESH_SECRET` - Optional secret for the `/_refresh` endpoint
 
 ## Develop
 
