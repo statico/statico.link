@@ -13,7 +13,7 @@
   },
   "packageManager": "pnpm@10.33.0",
   "dependencies": {
-    "@hono/node-server": "^1.19.12",
-    "hono": "^4.12.11"
+    "@hono/node-server": "^1.19.13",
+    "hono": "^4.12.12"
   }
 }
